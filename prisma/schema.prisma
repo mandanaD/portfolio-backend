@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  VISITOR
+}
+
+model User {
+  id        String  @id @default(uuid(7))
+  email     String  @unique
+  firstName String?
+  lastName  String?
+  role      Role    @default(VISITOR)
+
+  tokens Token[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Token {
+  id        String   @id @default(uuid(7))
+  token     String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Resume {
+  id  String @id @default(uuid())
+  url String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String
+  updatedById String?
+  deletedById String?
+
+  createdBy User  @relation("ResumeCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("ResumeUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("ResumeDeletedBy", fields: [deletedById], references: [id])
+}
+
+model Exprimence {
+  id          String    @id @default(uuid(7))
+  title       String
+  description String?
+  company     String
+  startDate   DateTime
+  endDate     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String
+  updatedById String?
+  deletedById String?
+
+  createdBy User  @relation("ExprimenceCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("ExprimenceUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("ExprimenceDeletedBy", fields: [deletedById], references: [id])
+}
+
+model Project {
+  id                String             @id @default(uuid(7))
+  title             String
+  shortDescription  String
+  description       String
+  type              String
+  techStack         String[]           @default([])
+  roles             String[]           @default([])
+  results           String[]           @default([])
+  problem           String
+  solution          String
+  demoUrl           String?
+  githubUrl         String?
+  projectChallenges ProjectChallenge[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String
+  updatedById String?
+  deletedById String?
+
+  createdBy User  @relation("ProjectCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("ProjectUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("ProjectDeletedBy", fields: [deletedById], references: [id])
+
+  @@unique([title, deletedAt])
+}
+
+model ProjectChallenge {
+  id        String  @id @default(uuid(7))
+  challenge String
+  solution  String
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String
+  updatedById String?
+  deletedById String?
+
+  createdBy User  @relation("ProjectChallengeCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("ProjectChallengeUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("ProjectChallengeDeletedBy", fields: [deletedById], references: [id])
+}
+
+model SkillCategory {
+  id    String @id @default(uuid(7))
+  title String
+
+  skills Skill[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String
+  updatedById String?
+  deletedById String?
+
+  createdBy User  @relation("SkillCategoryCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("SkillCategoryUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("SkillCategoryDeletedBy", fields: [deletedById], references: [id])
+
+  @@unique([title, deletedAt])
+}
+
+model Skill {
+  id    String @id @default(uuid(7))
+  title String
+  url   String
+
+  categoryId String?
+  category   SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdById String
+  updatedById String?
+  deletedById String?
+
+  createdBy User  @relation("SkillCreatedBy", fields: [createdById], references: [id])
+  updatedBy User? @relation("SkillUpdatedBy", fields: [updatedById], references: [id])
+  deletedBy User? @relation("SkillDeletedBy", fields: [deletedById], references: [id])
+
+  @@unique([title, deletedAt])
+}
