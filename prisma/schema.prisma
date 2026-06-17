@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -21,6 +20,30 @@ model User {
   role      Role    @default(VISITOR)
 
   tokens Token[]
+
+  resumesCreated Resume[] @relation("ResumeCreatedBy")
+  resumesUpdated Resume[] @relation("ResumeUpdatedBy")
+  resumesDeleted Resume[] @relation("ResumeDeletedBy")
+
+  experiencesCreated Exprimence[] @relation("ExprimenceCreatedBy")
+  experiencesUpdated Exprimence[] @relation("ExprimenceUpdatedBy")
+  experiencesDeleted Exprimence[] @relation("ExprimenceDeletedBy")
+
+  projectsCreated Project[] @relation("ProjectCreatedBy")
+  projectsUpdated Project[] @relation("ProjectUpdatedBy")
+  projectsDeleted Project[] @relation("ProjectDeletedBy")
+
+  projectChallengesCreated ProjectChallenge[] @relation("ProjectChallengeCreatedBy")
+  projectChallengesUpdated ProjectChallenge[] @relation("ProjectChallengeUpdatedBy")
+  projectChallengesDeleted ProjectChallenge[] @relation("ProjectChallengeDeletedBy")
+
+  skillCategoriesCreated SkillCategory[] @relation("SkillCategoryCreatedBy")
+  skillCategoriesUpdated SkillCategory[] @relation("SkillCategoryUpdatedBy")
+  skillCategoriesDeleted SkillCategory[] @relation("SkillCategoryDeletedBy")
+
+  skillsCreated Skill[] @relation("SkillCreatedBy")
+  skillsUpdated Skill[] @relation("SkillUpdatedBy")
+  skillsDeleted Skill[] @relation("SkillDeletedBy")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -156,7 +179,7 @@ model Skill {
   url   String
 
   categoryId String?
-  category   SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category   SkillCategory? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
