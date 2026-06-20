@@ -8,6 +8,17 @@ import { UpdateUserDto } from './dtos/update-user.dto';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getUser(id: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id },
+    });
+    if (!user) {
+      throw new BadRequestException('User do not exists');
+    } else {
+      return user;
+    }
+  }
+
   async createUser(createUserDto: CreateUserDto) {
     const userExist = await this.prisma.user.findFirst({
       where: { email: createUserDto.email },
@@ -28,9 +39,7 @@ export class UserService {
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto) {
-    const userExist = await this.prisma.user.findFirst({
-      where: { id },
-    });
+    const userExist = await this.getUser(id);
     if (userExist) {
       let pass = userExist.password;
       if (updateUserDto.password) {
@@ -45,6 +54,15 @@ export class UserService {
         },
       });
     }
-    throw new BadRequestException('User do not exists');
+  }
+
+  async deleteUser(id: string) {
+    const existUser = await this.getUser(id);
+    if (existUser) {
+      void this.prisma.user.delete({
+        where: { id },
+      });
+      return null;
+    }
   }
 }
