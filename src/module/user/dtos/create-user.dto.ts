@@ -1,25 +1,7 @@
-import {
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
+import { SignupDto } from '../../auth/dtos/signup.dto';
 
-export class CreateUserDto {
-  @IsString()
-  firstName: string;
-
-  @IsString()
-  lastName: string;
-
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @MinLength(6)
-  password: string;
-
+export class CreateUserDto extends SignupDto {
   @IsOptional()
   @IsEnum(['VISITOR', 'OWNER'])
   role: string;
