@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../../../generated/prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { PayloadType } from './type/auth.type';
+import { SignupDto } from './dtos/signup.dto';
 
 @Injectable()
 export class AuthService {
@@ -19,11 +20,11 @@ export class AuthService {
     const payload: PayloadType = {
       sub: user.id,
     };
-    const accessToken = this.jwtService.signAsync(payload, {
+    const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '1d',
     });
 
-    const refreshToken = this.jwtService.signAsync(payload, {
+    const refreshToken = await this.jwtService.signAsync(payload, {
       expiresIn: '7d',
     });
 
@@ -32,8 +33,8 @@ export class AuthService {
     void this.prisma.token.create({
       data: {
         token: hashedToken,
-        user,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
 
@@ -61,11 +62,30 @@ export class AuthService {
           email: user.email,
           first_name: user.firstName,
           last_name: user.lastName,
-          is_admin: user.role,
+          role: user.role,
         };
       }
 
       throw new BadRequestException('incorrect email or password');
+    }
+  }
+
+  async signup(signupDto: SignupDto) {
+    const savedUser = await this.userService.createUser({
+      ...signupDto,
+      role: 'VISITOR',
+    });
+
+    if (savedUser) {
+      const tokens = await this.generateToken(savedUser);
+      return {
+        ...tokens,
+        id: savedUser.id,
+        email: savedUser.email,
+        first_name: savedUser.firstName,
+        last_name: savedUser.lastName,
+        role: savedUser.role,
+      };
     }
   }
 }
