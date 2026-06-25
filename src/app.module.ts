@@ -10,6 +10,8 @@ import { SkillCategoryModule } from './module/skill-category/skill-category.modu
 import { SkillModule } from './module/skill/skill.module';
 import { AuthModule } from './module/auth/auth.module';
 import { PrismaModule } from './module/prisma/prisma.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtGuard } from './module/auth/jwt/jwt.guard';
 
 @Module({
   imports: [
@@ -24,6 +26,12 @@ import { PrismaModule } from './module/prisma/prisma.module';
     PrismaModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard,
+    },
+  ],
 })
 export class AppModule {}
