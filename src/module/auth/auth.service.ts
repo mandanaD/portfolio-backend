@@ -19,6 +19,7 @@ export class AuthService {
   async generateToken(user: User) {
     const payload: PayloadType = {
       sub: user.id,
+      jti: crypto.randomUUID(),
     };
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '1d',
@@ -35,6 +36,7 @@ export class AuthService {
         token: hashedToken,
         userId: user.id,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        jti: payload.jti,
       },
     });
 
@@ -87,5 +89,73 @@ export class AuthService {
         role: savedUser.role,
       };
     }
+  }
+
+  async validateRefreshToken(refreshToken: string) {
+    let decodeToken: PayloadType;
+    try {
+      decodeToken = this.jwtService.verify<PayloadType>(refreshToken);
+    } catch {
+      throw new BadRequestException('Invalid or expired refresh token');
+    }
+
+    const tokenExist = await this.prisma.token.findFirst({
+      where: {
+        jti: decodeToken.jti,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!tokenExist) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const user = tokenExist.user;
+
+    if (tokenExist.revoked) {
+      throw new BadRequestException('Refresh token has been revoked');
+    }
+
+    if (tokenExist.expiresAt < new Date()) {
+      throw new BadRequestException('Refresh token expired');
+    }
+
+    const isValid = await bcrypt.compare(refreshToken, tokenExist.token);
+
+    if (!isValid) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+    return { tokenExist, user };
+  }
+
+  async refresh(refreshToken: string) {
+    const { tokenExist, user } = await this.validateRefreshToken(refreshToken);
+    if (tokenExist) {
+      await this.prisma.token.update({
+        where: {
+          id: tokenExist.id,
+        },
+        data: {
+          revoked: true,
+        },
+      });
+
+      return this.generateToken(user);
+    }
+  }
+
+  async logout(refreshToken: string) {
+    const { tokenExist } = await this.validateRefreshToken(refreshToken);
+    await this.prisma.token.update({
+      where: {
+        id: tokenExist.id,
+      },
+      data: {
+        revoked: true,
+      },
+    });
+    return null;
   }
 }
